@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * webhooks controller
+ *
  * @author xie.wei
  * @date created at 2021-11-16 10:53
  */
@@ -43,14 +45,12 @@ public class WebhookAuthController {
 
     @PostMapping("subscribe")
     public ResponseDTO authOnSubscribe(@RequestBody AuthOnSubscribeDTO dto) {
-        log.info("=================== subscribe");
         return webhookService.authorizeSubscribe(dto.getTopics()) ?
                 ResponseDTO.ok() : ResponseDTO.errorDefault();
     }
 
     @PostMapping("publish")
     public ResponseDTO authOnPublish(@RequestBody AuthOnPublishDTO dto) {
-        log.info("=================== publish");
         return webhookService.authorizePublish(dto.getTopic()) ?
                 ResponseDTO.ok() : ResponseDTO.error("some message error");
     }

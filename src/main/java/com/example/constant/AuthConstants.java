@@ -3,6 +3,8 @@ package com.example.constant;
 import java.util.List;
 
 /**
+ * auth constant class
+ *
  * @author xie.wei
  * @date created at 2021-11-16 11:31
  */
@@ -17,6 +19,5 @@ public interface AuthConstants {
     String SUB_ACTION = "sub";
     List<String> ACTION_LIST = List.of(PUB_ACTION, SUB_ACTION);
 
-    String USER_PLACEHOLDER = "{userId}";
-    String PVIN_PLACEHOLDER = "{pvin}";
+    String PVIN_PLACEHOLDER = "pvin";
 }

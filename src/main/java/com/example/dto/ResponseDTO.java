@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 
 /**
+ * response dto to mqtt client
+ *
  * @author xie.wei
  * @date created at 2021-11-16 16:36
  */

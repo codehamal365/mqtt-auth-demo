@@ -10,23 +10,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.stream.Stream;
 
 /**
+ * aspect to resolve username to client type and detailed info
+ *
  * @author xie.wei
  * @date created at 2021-11-16 14:31
  */
+@AllArgsConstructor
 @Component
 @Aspect
 @Slf4j
 public class ClientTypeAspect {
 
-    @Autowired
-    private HttpServletRequest request;
+    private final HttpServletRequest request;
+
+    private final HttpServletResponse response;
 
     @Around("execution(* com.example.controller.*.*(..))")
     public Object around(ProceedingJoinPoint joinPoint) {
@@ -51,6 +55,7 @@ public class ClientTypeAspect {
             }
         });
         try {
+
             return joinPoint.proceed();
         } catch (Throwable throwable) {
             log.error(throwable.getMessage());

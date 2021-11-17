@@ -21,6 +21,8 @@ import java.lang.annotation.Target;
 import java.util.List;
 
 /**
+ * configuration map for topics and scopes
+ *
  * @author xie.wei
  * @date created at 2021-11-16 18:07
  */

@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
+ * publish dto
+ *
  * @author xie.wei
  * @date created at 2021-11-16 10:55
  */

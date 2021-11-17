@@ -5,11 +5,12 @@ import org.junit.Test;
 import org.springframework.util.AntPathMatcher;
 
 /**
+ * topic tests
+ *
  * @author xie.wei
  * @date created at 2021-11-17 15:02
  */
-public class ParseTest {
-
+public class TopicTest {
 
     /**
      * /users/{userId}/vehicles/{pvin}/#
@@ -26,11 +27,6 @@ public class ParseTest {
      * /vehicle-user/{userId}/{pvin}/removeUserVehicle/#
      * /vehicle-user/{userId}/{pvin}/updateUserVehicle/#
      */
-    /**
-     * 不含/
-     * 头含/ 尾不含/
-     * 头含/ 尾含/
-     */
     static String s = "";
 
     @Test
@@ -38,19 +34,9 @@ public class ParseTest {
         // https://www.cnblogs.com/syp172654682/p/9257282.html
         String test = "";
         AntPathMatcher pathMatcher = new AntPathMatcher("/");
-        final boolean test1 = pathMatcher.match("/users/{userId}/**/vehicles/{pvin}/**", "/users/aa/ccc/vehicles/bb");
-        System.out.println(test1);
-
-        //
-        System.out.println(pathMatcher.match("/users/*/{serviceName}", "/users/+/aaa"));
-
+        String cc= "services/+/{serviceName}/vehicles/#";
+        System.out.println(pathMatcher.match(cc,"services/aaa/{serviceName}/vehicles/#"));
         Assert.assertEquals(1, 1);
     }
 
-    public static boolean auth() {
-        String topic = "/users/{userId}/vehicles/{pvin}/#";
-
-
-        return true;
-    }
 }

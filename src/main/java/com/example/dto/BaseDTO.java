@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.Getter;
 
 /**
+ * base dto for publish subscribe and register
+ *
  * @author xie.wei
  * @date created at 2021-11-16 10:59
  */

@@ -1,25 +1,24 @@
 package com.example.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.example.config.ConfigMap;
-import com.example.constant.AuthConstants;
 import com.example.dto.TopicDTO;
 import com.example.enums.ClientType;
 import com.example.service.WebhookService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
+ * auth service
+ *
  * @author xie.wei
  * @date created at 2021-11-16 13:43
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WebhookServiceImpl implements WebhookService {
 
     private final ConfigMap configMap;
@@ -31,39 +30,34 @@ public class WebhookServiceImpl implements WebhookService {
 
     @Override
     public boolean authorizePublish(String topic) {
-        var topics = configMap.getTopics();
-        if (StrUtil.isEmpty(topic)) {
-            return false;
-        }
-        if (!topic.contains("/")) {
-            final List<ConfigMap.@Valid TopicProperties> collect = topics.stream()
-                    .filter(pro -> StrUtil.equals(topic, pro.getTopic()) ||
-                            StrUtil.equalsAny(pro.getTopic(), AuthConstants.POUND_KEY, AuthConstants.PLUS))
-                    .collect(Collectors.toList());
-            if(CollUtil.isEmpty(collect)){
-                return false;
-            }
-            collect.forEach(pro ->{
-
-
-            });
-
-        }
-
-        return true;
-    }
-
-//    private boolean checkTopic(){
-//
-//    }
-
-    public static void main(String[] args) {
-        final String[] split = "/users/{userId}/vehicles/{pvin}/#".split("/");
-        System.out.println(split);
+        // pub topic without # and +
+        return ClientType.getInstance().authorize(topic, configMap.getTopics(), (antPathMatcher, regTopic) ->
+                antPathMatcher.match(regTopic
+                        .replaceAll("\\+", "*").replaceAll("#", "**"), topic)
+        );
     }
 
     @Override
     public boolean authorizeSubscribe(List<TopicDTO> topics) {
+        // sub topic can contains # or +
+        for (TopicDTO topic : topics) {
+            final String originTopic = topic.getTopic();
+            boolean authorize = ClientType.getInstance().authorize(originTopic, configMap.getTopics(),
+                    (antPathMatcher, regTopic) -> {
+                        boolean matchAll = antPathMatcher.match(regTopic
+                                .replaceAll("\\+", "*")
+                                .replaceAll("#", "**"), originTopic);
+                        boolean matchPoundKey = antPathMatcher.match(regTopic
+                                .replaceAll("\\+", "*"), originTopic);
+                        boolean matchPlus = antPathMatcher.match(regTopic
+                                .replaceAll("#", "**"), originTopic);
+                        return matchAll || matchPoundKey || matchPlus;
+                    });
+            if (!authorize) {
+                log.error("{} can not be validated by configuration topics map", originTopic);
+                return false;
+            }
+        }
         return true;
     }
 }

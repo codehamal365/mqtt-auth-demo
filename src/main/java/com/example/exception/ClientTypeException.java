@@ -3,6 +3,8 @@ package com.example.exception;
 import lombok.ToString;
 
 /**
+ * mqtt client exception class
+ *
  * @author xie.wei
  * @date created at 2021-11-16 14:11
  */

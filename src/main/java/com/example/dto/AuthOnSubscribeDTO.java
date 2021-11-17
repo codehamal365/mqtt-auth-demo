@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
+ * subscribe dto
+ *
  * @author xie.wei
  * @date created at 2021-11-16 10:58
  */

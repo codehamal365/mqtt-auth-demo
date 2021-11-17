@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 /**
+ * used by subscribe dto
+ *
  * @author xie.wei
  * @date created at 2021-11-16 10:58
  */
