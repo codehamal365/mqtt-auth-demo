@@ -1,0 +1,86 @@
+server:
+  port: 18088
+
+config-map:
+  scopes:
+    - email
+  topics:
+    - topic: "/users/{userId}/vehicles/{pvin}/#"
+      client:
+        - user
+        - device
+      actions:
+        - pub
+        - sub
+      permissions:
+        - vehicle:view
+    - topic: "/users/{userId}/customers/#"
+      client:
+        - user
+      actions:
+        - pub
+    - topic: "/users/{userId}/grantPermission/#"
+      client:
+        - user
+      actions:
+        - pub
+    - topic: "/devices/{pdeviceId}/getDeviceVehicle/#"
+      client:
+        - device
+      actions:
+        - pub
+        - sub
+    - topic: "/devices/{pdeviceId}/postNetworkStatus/#"
+      client:
+        - device
+      actions:
+        - pub
+    - topic: "/devices/{pdeviceId}/postDeviceLog/#"
+      client:
+        - device
+      actions:
+        - sub
+    - topic: "/vehicles/{pvin}/devices/{pdeviceId}/info"
+      client:
+        - device
+      actions:
+        - pub
+        - sub
+    - topic: "/services/{serviceName}/devices/getDeviceLogs/#"
+      client:
+        - service
+      actions:
+        - sub
+    - topic: "/users/+/{serviceName}/"
+      client:
+        - service
+      actions:
+        - pub
+        - sub
+    - topic: "/services/{serviceName}/vehicles/#"
+      client:
+        - service
+      actions:
+        - pub
+    - topic: "/vehicle-user/{userId}/{pvin}/addUserVehicle/#"
+      client:
+        - user
+      actions:
+        - pub
+      permissions:
+        - user:add
+    - topic: "/vehicle-user/{userId}/{pvin}/removeUserVehicle/#"
+      client:
+        - user
+      actions:
+        - sub
+      permissions:
+        - user:remove
+    - topic: "/vehicle-user/{userId}/{pvin}/updateUserVehicle/#"
+      client:
+        - user
+      actions:
+        - pub
+        - sub
+      permissions:
+        - user:update
