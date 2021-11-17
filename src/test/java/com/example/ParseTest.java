@@ -41,6 +41,9 @@ public class ParseTest {
         final boolean test1 = pathMatcher.match("/users/{userId}/**/vehicles/{pvin}/**", "/users/aa/ccc/vehicles/bb");
         System.out.println(test1);
 
+        //
+        System.out.println(pathMatcher.match("/users/*/{serviceName}", "/users/+/aaa"));
+
         Assert.assertEquals(1, 1);
     }
 
