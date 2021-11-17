@@ -35,6 +35,7 @@ public class ParseTest {
 
     @Test
     public void test() {
+        // https://www.cnblogs.com/syp172654682/p/9257282.html
         String test = "";
         AntPathMatcher pathMatcher = new AntPathMatcher("/");
         final boolean test1 = pathMatcher.match("/users/{userId}/**/vehicles/{pvin}/**", "/users/aa/ccc/vehicles/bb");
