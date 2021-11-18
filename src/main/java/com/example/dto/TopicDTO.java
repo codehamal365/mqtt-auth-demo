@@ -3,6 +3,8 @@ package com.example.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * used by subscribe dto
  *
@@ -12,6 +14,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class TopicDTO {
+    @NotBlank(message = "topic can not be blank")
     private String topic;
     private int qos;
 }

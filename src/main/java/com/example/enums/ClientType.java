@@ -13,7 +13,6 @@ import com.nimbusds.jwt.SignedJWT;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.springframework.util.AntPathMatcher;
 
 import java.text.ParseException;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static cn.hutool.core.text.CharSequenceUtil.isBlank;
@@ -45,6 +43,25 @@ public enum ClientType {
             log.info("user:sub is user:{}", sub);
             return Objects.equal(value, sub);
         }
+
+        @Override
+        boolean authClientValue(ConfigMap.TopicProperties matchedTopic, Map<String, String> stringMap,
+                                String typeValue) {
+            if (stringMap.containsKey(AuthConstants.USERID_PLACEHOLDER) &&
+                    !Objects.equal(typeValue, stringMap.get(AuthConstants.USERID_PLACEHOLDER))) {
+                return false;
+            }
+
+            if (!stringMap.containsKey(AuthConstants.PVIN_PLACEHOLDER)) {
+                return true;
+            }
+            if (CollUtil.isEmpty(matchedTopic.getPermissions())) {
+                return true;
+            }
+            // call vehicle-Management api to check permission
+            // todo..
+            return true;
+        }
     },
     DEVICE("device") {
         @Override
@@ -56,6 +73,29 @@ public enum ClientType {
             log.info("device:pdeviceId@pvin is device:{}", join);
             return Objects.equal(value, join);
         }
+
+        @Override
+        boolean authClientValue(ConfigMap.TopicProperties matchedTopic, Map<String, String> stringMap,
+                                String typeValue) {
+            try {
+                List<String> list = Splitter.on("@").splitToList(typeValue);
+                String pdeviceid = list.get(0);
+                String pvin = list.get(1);
+                if (stringMap.containsKey(AuthConstants.PDEVICEID_PLACEHOLDER) &&
+                        !Objects.equal(pdeviceid, stringMap.get(AuthConstants.PDEVICEID_PLACEHOLDER))) {
+                    return false;
+                }
+                if (stringMap.containsKey(AuthConstants.PVIN_PLACEHOLDER) &&
+                        !Objects.equal(pvin, stringMap.get(AuthConstants.PVIN_PLACEHOLDER))) {
+                    return false;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("device username is invalid,please check client username");
+                return false;
+            }
+            return true;
+        }
     },
     SERVICE("service") {
         @Override
@@ -63,6 +103,16 @@ public enum ClientType {
             var serviceName = claims.getOrDefault("preferred_username", "");
             log.info("service:serviceName is service:{}", serviceName);
             return Objects.equal(value, serviceName);
+        }
+
+        @Override
+        boolean authClientValue(ConfigMap.TopicProperties matchedTopic, Map<String, String> stringMap,
+                                String typeValue) {
+            if (stringMap.containsKey(AuthConstants.SERVICENAME_PLACEHOLDER) &&
+                    !Objects.equal(typeValue, stringMap.get(AuthConstants.SERVICENAME_PLACEHOLDER))) {
+                return false;
+            }
+            return true;
         }
     };
 
@@ -88,8 +138,7 @@ public enum ClientType {
             var claimScopes = Splitter.on(" ").splitToList(scope);
             log.info("claimScopes is【{}】and configMapScopes is 【{}】", claimScopes, configMapScopes);
             // check user name
-            // todo >=
-            return exp <= Calendar.getInstance().getTime().getTime()
+            return exp >= Calendar.getInstance().getTime().getTime()
                     && claimScopes.containsAll(configMapScopes)
                     && authJwt(ClientTypeAspect.UserNameContext
                     .getHolder().getValue(), claims);
@@ -126,6 +175,11 @@ public enum ClientType {
                               BiPredicate<AntPathMatcher, String> predict) {
         // todo can be cached?
         AntPathMatcher pathMatcher = new AntPathMatcher();
+        // topic from client should replace placeholder
+        if (pathMatcher.isPattern(topic)) {
+            log.error("topic: {} with placeholder is invalid,please check", topic);
+            return false;
+        }
         ConfigMap.TopicProperties matchedTopic = null;
         for (ConfigMap.TopicProperties configTopic : filterList) {
             String regTopic = configTopic.getTopic();
@@ -138,23 +192,16 @@ public enum ClientType {
         if (matchedTopic == null) {
             return false;
         }
-        if (this == ClientType.USER) {
-            Map<String, String> stringMap = pathMatcher
-                    .extractUriTemplateVariables(matchedTopic.getTopic().replaceAll("\\+", "*")
-                            .replaceAll("#", "**"), topic);
-            if (!stringMap.containsKey(AuthConstants.PVIN_PLACEHOLDER)) {
-                return true;
-            }
-            if (CollUtil.isEmpty(matchedTopic.getPermissions())) {
-                return true;
-            }
-            // call vehicle-Management api to check permission
-            // todo..
-        }
-        return true;
+        Map<String, String> stringMap = pathMatcher
+                .extractUriTemplateVariables(matchedTopic.getTopic().replaceAll("\\+", "*")
+                        .replaceAll("#", "**"), topic);
+        return authClientValue(matchedTopic, stringMap, ClientTypeAspect.UserNameContext.getHolder().getValue());
     }
 
     abstract boolean authJwt(String value, Map<String, Object> claims);
+
+    abstract boolean authClientValue(ConfigMap.TopicProperties matchedTopic,
+                                     Map<String, String> stringMap, String typeValue);
 
     public static ClientType getInstance() {
         var holder = ClientTypeAspect.UserNameContext

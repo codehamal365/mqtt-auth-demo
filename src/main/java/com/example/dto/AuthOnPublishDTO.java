@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * publish dto
  *
@@ -17,8 +19,10 @@ public class AuthOnPublishDTO extends BaseDTO {
 
     private int qos;
 
+    @NotBlank(message = "topic can not be blank")
     private String topic;
 
+    @NotBlank(message = "payload can not be blank")
     private String payload;
 
     private boolean retain;

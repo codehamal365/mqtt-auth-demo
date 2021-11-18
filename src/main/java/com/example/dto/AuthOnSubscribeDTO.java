@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -16,5 +18,6 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class AuthOnSubscribeDTO extends BaseDTO {
-    private List<TopicDTO> topics;
+    @NotEmpty(message = "topics can not be empty")
+    private List<@Valid TopicDTO> topics;
 }

@@ -1,6 +1,9 @@
 package com.example.constant;
 
+import org.springframework.http.CacheControl;
+
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * auth constant class
@@ -15,9 +18,17 @@ public interface AuthConstants {
     String PLUS = "+";
     String POUND_KEY = "#";
 
+
     String PUB_ACTION = "pub";
     String SUB_ACTION = "sub";
     List<String> ACTION_LIST = List.of(PUB_ACTION, SUB_ACTION);
 
+
+    String USERID_PLACEHOLDER = "userId";
     String PVIN_PLACEHOLDER = "pvin";
+    String PDEVICEID_PLACEHOLDER = "pdeviceId";
+    String SERVICENAME_PLACEHOLDER = "serviceName";
+
+    CacheControl CACHE_CONTROL = CacheControl.maxAge(30, TimeUnit.SECONDS);
+
 }

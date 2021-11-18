@@ -55,11 +55,11 @@ public class ClientTypeAspect {
             }
         });
         try {
-
+            response.setHeader("Cache-Control", AuthConstants.CACHE_CONTROL.getHeaderValue());
             return joinPoint.proceed();
         } catch (Throwable throwable) {
             log.error(throwable.getMessage());
-            return ResponseDTO.errorDefault();
+            return ResponseDTO.error(throwable.getMessage());
         } finally {
             UserNameContext.close();
         }

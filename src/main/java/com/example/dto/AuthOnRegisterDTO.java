@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * registration dto
  *
@@ -21,6 +23,7 @@ public class AuthOnRegisterDTO extends BaseDTO {
     @JsonProperty("peer_port")
     private int peerPort;
 
+    @NotBlank(message = "password can not be blank")
     private String password;
 
     @JsonProperty("clean_session")
