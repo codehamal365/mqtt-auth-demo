@@ -2,23 +2,19 @@ package com.example.config;
 
 import com.example.constant.AuthConstants;
 import com.example.enums.ClientType;
+import com.example.exception.ConfigMapException;
 import lombok.Data;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.Constraint;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
-import javax.validation.Payload;
-import javax.validation.Valid;
+import javax.validation.*;
 import javax.validation.constraints.NotBlank;
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * configuration map for topics and scopes
@@ -30,7 +26,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "config-map")
 @Component
 @Data
-public class ConfigMap {
+public class ConfigMap implements InitializingBean {
 
     private List<String> scopes;
     private List<@Valid TopicProperties> topics;
@@ -84,6 +80,16 @@ public class ConfigMap {
                 }
             }
             return true;
+        }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        Set<String> collect = topics.stream()
+                .map(TopicProperties::getTopic).collect(Collectors.toSet());
+        // topics should differ each other
+        if (collect.size() != topics.size()) {
+            throw new ConfigMapException("topics configuration have same topic");
         }
     }
 }

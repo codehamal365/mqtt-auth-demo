@@ -27,16 +27,14 @@ public class TopicTest {
      * /vehicle-user/{userId}/{pvin}/removeUserVehicle/#
      * /vehicle-user/{userId}/{pvin}/updateUserVehicle/#
      */
-    static String s = "";
-
     @Test
     public void test() {
         // https://www.cnblogs.com/syp172654682/p/9257282.html
-        String test = "";
-        AntPathMatcher pathMatcher = new AntPathMatcher("/");
-        String cc= "services/+/{serviceName}/vehicles/#";
-        System.out.println(pathMatcher.match(cc,"services/aaa/{serviceName}/vehicles/#"));
-        Assert.assertEquals(1, 1);
+        AntPathMatcher pathMatcher = new AntPathMatcher();
+        String reg = "services/+/{serviceName}/vehicles/#";
+        Assert.assertTrue(pathMatcher.match(reg.replaceAll("\\+", "*")
+                        .replaceAll("#", "**")
+                , "services/aaa/{serviceName}/vehicles/#"));
     }
 
 }
