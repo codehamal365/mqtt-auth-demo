@@ -2,10 +2,12 @@ package com.example.enums;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
-import com.example.apects.ClientTypeAspect;
 import com.example.config.ConfigMap;
 import com.example.constant.AuthConstants;
+import com.example.exception.AuthenticationException;
+import com.example.exception.AuthorizationException;
 import com.example.exception.ClientTypeException;
+import com.example.web.UserNameContext;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
@@ -19,11 +21,10 @@ import java.text.ParseException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 
-import static cn.hutool.core.text.CharSequenceUtil.isBlank;
+import static com.example.constant.AuthConstants.PLUS;
+import static com.example.constant.AuthConstants.POUND_KEY;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -45,8 +46,9 @@ public enum ClientType {
         }
 
         @Override
-        boolean authClientValue(ConfigMap.TopicProperties matchedTopic, Map<String, String> stringMap,
-                                String typeValue) {
+        boolean authorizeClientValue(ConfigMap.TopicProperties matchedTopic,
+                                     Map<String, String> stringMap,
+                                     String typeValue) {
             if (stringMap.containsKey(AuthConstants.USERID_PLACEHOLDER) &&
                     !Objects.equal(typeValue, stringMap.get(AuthConstants.USERID_PLACEHOLDER))) {
                 return false;
@@ -75,44 +77,36 @@ public enum ClientType {
         }
 
         @Override
-        boolean authClientValue(ConfigMap.TopicProperties matchedTopic, Map<String, String> stringMap,
-                                String typeValue) {
-            try {
-                List<String> list = Splitter.on("@").splitToList(typeValue);
-                String pdeviceid = list.get(0);
-                String pvin = list.get(1);
-                if (stringMap.containsKey(AuthConstants.PDEVICEID_PLACEHOLDER) &&
-                        !Objects.equal(pdeviceid, stringMap.get(AuthConstants.PDEVICEID_PLACEHOLDER))) {
-                    return false;
-                }
-                if (stringMap.containsKey(AuthConstants.PVIN_PLACEHOLDER) &&
-                        !Objects.equal(pvin, stringMap.get(AuthConstants.PVIN_PLACEHOLDER))) {
-                    return false;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.error("device username is invalid,please check client username");
+        boolean authorizeClientValue(ConfigMap.TopicProperties matchedTopic,
+                                     Map<String, String> stringMap,
+                                     String typeValue) {
+            List<String> list = Splitter.on("@").splitToList(typeValue);
+            if (CollUtil.isEmpty(list) && list.size() != 2) {
+                throw new ClientTypeException("device username with pDeviceId and pVin is not correct");
+            }
+            String pDeviceId = list.get(0);
+            String pVin = list.get(1);
+            if (stringMap.containsKey(AuthConstants.PDEVICEID_PLACEHOLDER) &&
+                    !Objects.equal(pDeviceId, stringMap.get(AuthConstants.PDEVICEID_PLACEHOLDER))) {
                 return false;
             }
-            return true;
+            return !stringMap.containsKey(AuthConstants.PVIN_PLACEHOLDER) ||
+                    Objects.equal(pVin, stringMap.get(AuthConstants.PVIN_PLACEHOLDER));
         }
     },
     SERVICE("service") {
         @Override
         boolean authJwt(String value, Map<String, Object> claims) {
-            var serviceName = claims.getOrDefault("preferred_username", "");
+            var serviceName = claims.getOrDefault("clientId", "");
             log.info("service:serviceName is service:{}", serviceName);
             return Objects.equal(value, serviceName);
         }
 
         @Override
-        boolean authClientValue(ConfigMap.TopicProperties matchedTopic, Map<String, String> stringMap,
-                                String typeValue) {
-            if (stringMap.containsKey(AuthConstants.SERVICENAME_PLACEHOLDER) &&
-                    !Objects.equal(typeValue, stringMap.get(AuthConstants.SERVICENAME_PLACEHOLDER))) {
-                return false;
-            }
-            return true;
+        boolean authorizeClientValue(ConfigMap.TopicProperties matchedTopic, Map<String, String> stringMap,
+                                     String typeValue) {
+            return !stringMap.containsKey(AuthConstants.SERVICENAME_PLACEHOLDER) ||
+                    Objects.equal(typeValue, stringMap.get(AuthConstants.SERVICENAME_PLACEHOLDER));
         }
     };
 
@@ -140,51 +134,45 @@ public enum ClientType {
             // check user name
             return exp >= Calendar.getInstance().getTime().getTime()
                     && claimScopes.containsAll(configMapScopes)
-                    && authJwt(ClientTypeAspect.UserNameContext
-                    .getHolder().getValue(), claims);
+                    && authJwt(UserNameContext.getHolder().getValue(), claims);
         } catch (ParseException e) {
             log.error("jwt extract password error, please confirm");
-            return false;
+            throw new AuthenticationException("password is invalid");
         }
     }
 
     /**
-     * @param topic   original topic form client for publishing or subscribing
-     * @param topics  topics need be checked from configuration
-     * @param predict function to validate topic either publish or subscribe function
+     * @param topic  original topic form client for publishing or subscribing
+     * @param topics topics need be checked from configuration
      * @return true or false
      */
-    public final boolean authorize(String topic, List<ConfigMap.TopicProperties> topics,
-                                   BiPredicate<AntPathMatcher, String> predict) {
-        if (isBlank(topic)) {
-            return false;
-        }
+    public final boolean authorize(String topic, List<ConfigMap.TopicProperties> topics) {
         // match client type and actions
         var filterList = topics
                 .stream()
                 .filter(item -> item.getClient().contains(getTypeName()) && item.getActions()
-                        .contains(ClientTypeAspect.UserNameContext.getHolder().getAction()))
+                        .contains(UserNameContext.getHolder().getWebHookType().getAction()))
                 .collect(toList());
         if (CollUtil.isEmpty(filterList)) {
             return false;
         }
-        return authTopic(topic, filterList, predict);
+        return authTopic(topic, filterList);
     }
 
-    private boolean authTopic(String topic, List<ConfigMap.TopicProperties> filterList,
-                              BiPredicate<AntPathMatcher, String> predict) {
-        // todo can be cached?
+    private boolean authTopic(String topic, List<ConfigMap.TopicProperties> filterList) {
         AntPathMatcher pathMatcher = new AntPathMatcher();
         // topic from client should replace placeholder
         if (pathMatcher.isPattern(topic)) {
-            log.error("topic: {} with placeholder is invalid,please check", topic);
-            return false;
+            log.error("topic: {} with placeholder is invalid, please check", topic);
+            throw new AuthorizationException("topic with placeholder is in valid");
         }
         ConfigMap.TopicProperties matchedTopic = null;
         for (ConfigMap.TopicProperties configTopic : filterList) {
             String regTopic = configTopic.getTopic();
             // always matched the first one and pre-condition all the configuration topics is unique
-            if (topic.equals(regTopic) || predict.test(pathMatcher, regTopic)) {
+            if (topic.equals(regTopic) || pathMatcher.match(regTopic
+                    .replace(PLUS, "*")
+                    .replace(POUND_KEY, "**"), topic)) {
                 matchedTopic = configTopic;
                 break;
             }
@@ -193,23 +181,22 @@ public enum ClientType {
             return false;
         }
         Map<String, String> stringMap = pathMatcher
-                .extractUriTemplateVariables(matchedTopic.getTopic().replaceAll("\\+", "*")
-                        .replaceAll("#", "**"), topic);
-        return authClientValue(matchedTopic, stringMap, ClientTypeAspect.UserNameContext.getHolder().getValue());
+                .extractUriTemplateVariables(matchedTopic.getTopic()
+                        .replace(PLUS, "*")
+                        .replace(POUND_KEY, "**"), topic);
+        return authorizeClientValue(matchedTopic, stringMap, UserNameContext.getHolder().getValue());
     }
 
     abstract boolean authJwt(String value, Map<String, Object> claims);
 
-    abstract boolean authClientValue(ConfigMap.TopicProperties matchedTopic,
-                                     Map<String, String> stringMap, String typeValue);
+    abstract boolean authorizeClientValue(ConfigMap.TopicProperties matchedTopic,
+                                          Map<String, String> stringMap, String typeValue);
 
-    public static ClientType getInstance() {
-        var holder = ClientTypeAspect.UserNameContext
-                .getHolder();
-        return Stream.of(ClientType.values()).filter(type -> Objects.equal(type.getTypeName(),
-                Optional.ofNullable(holder).map(ClientTypeAspect.ClientTypeHolder::getType)
-                        .orElseThrow(() -> new ClientTypeException("parse client from username error"))))
-                .findAny().orElseThrow(() -> new ClientTypeException("client type is not correct"));
+    public static ClientType getInstance(String type) {
+        return Stream.of(ClientType.values()).filter(item ->
+                Objects.equal(item.getTypeName(), type))
+                .findAny()
+                .orElseThrow(() -> new ClientTypeException("client type is not correct"));
     }
 
     public static List<String> getClientTypeList() {

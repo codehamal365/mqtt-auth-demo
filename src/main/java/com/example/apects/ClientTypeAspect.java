@@ -3,14 +3,12 @@ package com.example.apects;
 import com.example.constant.AuthConstants;
 import com.example.dto.BaseDTO;
 import com.example.dto.ResponseDTO;
+import com.example.web.UserNameContext;
 import com.google.common.base.Splitter;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,8 +21,6 @@ import java.util.stream.Stream;
  * @date created at 2021-11-16 14:31
  */
 @AllArgsConstructor
-@Component
-@Aspect
 @Slf4j
 public class ClientTypeAspect {
 
@@ -48,7 +44,7 @@ public class ClientTypeAspect {
                 } else if (header.contains(AuthConstants.PUB_ACTION)) {
                     header = AuthConstants.PUB_ACTION;
                 }
-                UserNameContext.setHolder(new ClientTypeHolder(username, type, value, header));
+                UserNameContext.setHolder(new UserNameContext.ClientTypeHolder(value, null, null));
             } catch (Exception e) {
                 log.error("username:【{}】param is invalid, it should like user:userId",
                         username);
@@ -63,34 +59,5 @@ public class ClientTypeAspect {
         } finally {
             UserNameContext.close();
         }
-    }
-
-    public static class UserNameContext {
-
-        private UserNameContext() {
-        }
-
-        static final ThreadLocal<ClientTypeHolder> ctx = new ThreadLocal<>();
-
-        public static void close() {
-            ctx.remove();
-        }
-
-        public static ClientTypeHolder getHolder() {
-            return ctx.get();
-        }
-
-        public static void setHolder(ClientTypeHolder holder) {
-            ctx.set(holder);
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class ClientTypeHolder {
-        private String username;
-        private String type;
-        private String value;
-        private String action;
     }
 }

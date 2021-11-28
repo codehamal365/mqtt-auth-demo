@@ -2,13 +2,16 @@ package com.example.service.impl;
 
 import com.example.config.ConfigMap;
 import com.example.dto.TopicDTO;
-import com.example.enums.ClientType;
+import com.example.exception.AuthorizationException;
 import com.example.service.WebhookService;
+import com.example.web.UserNameContext;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import static com.example.constant.AuthConstants.PLUS;
+import static com.example.constant.AuthConstants.POUND_KEY;
 
 /**
  * auth service
@@ -25,39 +28,31 @@ public class WebhookServiceImpl implements WebhookService {
 
     @Override
     public boolean authenticateRegister(String username, String password) {
-        return ClientType.getInstance().authenticate(password, configMap.getScopes());
+        return UserNameContext.getHolder().getClientType()
+                .authenticate(password, configMap.getScopes());
     }
 
     @Override
     public boolean authorizePublish(String topic) {
-        // pub topic without # and +
-        return ClientType.getInstance().authorize(topic, configMap.getTopics(), (antPathMatcher, regTopic) ->
-                antPathMatcher.match(regTopic
-                        .replaceAll("\\+", "*").replaceAll("#", "**"), topic)
-        );
+        // pub topic without # and + due to mqtt rule
+        log.debug("publish topic {}, config-topics {}", topic, configMap.getTopics());
+        if (topic.contains(PLUS) || topic.contains(POUND_KEY)) {
+            throw new AuthorizationException("topic with '+' or '#' is not allowed");
+        }
+        return UserNameContext.getHolder().getClientType()
+                .authorize(topic, configMap.getTopics());
     }
 
     @Override
     public boolean authorizeSubscribe(List<TopicDTO> topics) {
         // sub topic can contains # or +
-        for (TopicDTO topic : topics) {
-            final String originTopic = topic.getTopic();
-            boolean authorize = ClientType.getInstance().authorize(originTopic, configMap.getTopics(),
-                    (antPathMatcher, regTopic) -> {
-                        boolean matchAll = antPathMatcher.match(regTopic
-                                .replaceAll("\\+", "*")
-                                .replaceAll("#", "**"), originTopic);
-                        boolean matchPoundKey = antPathMatcher.match(regTopic
-                                .replaceAll("\\+", "*"), originTopic);
-                        boolean matchPlus = antPathMatcher.match(regTopic
-                                .replaceAll("#", "**"), originTopic);
-                        return matchAll || matchPoundKey || matchPlus;
-                    });
-            if (!authorize) {
-                log.error("{} can not be validated by configuration topics map", originTopic);
-                return false;
-            }
-        }
-        return true;
+        var clientType = UserNameContext.getHolder().getClientType();
+        return topics.stream()
+                .peek(topic -> {
+                    if (!clientType.authorize(topic.getTopic(), configMap.getTopics())) {
+                        log.error("{} can not be validated by configuration topics map", topic.getTopic());
+                    }
+                })
+                .allMatch(topic -> clientType.authorize(topic.getTopic(), configMap.getTopics()));
     }
 }

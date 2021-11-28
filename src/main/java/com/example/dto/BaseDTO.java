@@ -1,5 +1,6 @@
 package com.example.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -11,6 +12,7 @@ import javax.validation.constraints.NotBlank;
  * @author xie.wei
  * @date created at 2021-11-16 10:59
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class BaseDTO {
     @JsonProperty("client_id")

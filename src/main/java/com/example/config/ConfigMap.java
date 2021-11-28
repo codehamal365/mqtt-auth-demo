@@ -3,18 +3,30 @@ package com.example.config;
 import com.example.constant.AuthConstants;
 import com.example.enums.ClientType;
 import com.example.exception.ConfigMapException;
+import com.google.common.base.Splitter;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.validation.Constraint;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+import javax.validation.Payload;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import lombok.Data;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.*;
-import javax.validation.constraints.NotBlank;
-import java.lang.annotation.*;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import static com.example.constant.AuthConstants.PLUS;
+import static com.example.constant.AuthConstants.POUND_KEY;
+import static com.example.constant.AuthConstants.SLASH;
 
 /**
  * configuration map for topics and scopes
@@ -91,5 +103,36 @@ public class ConfigMap implements InitializingBean {
         if (collect.size() != topics.size()) {
             throw new ConfigMapException("topics configuration have same topic");
         }
+        String exp = "topic %s is invalid %s";
+        // check topic rules of # and +
+        collect.forEach(topic -> {
+            // check empty path //
+            if (topic.contains("//")) {
+                throw new ConfigMapException(String.format(exp, topic, ", it has empty path value"));
+            }
+            /*
+             *   check #
+             *   if path contains #, it can only be placed in the path tail
+             */
+            var index = topic.indexOf(POUND_KEY);
+            if (index >= 0 && index < topic.length() - 1) {
+                throw new ConfigMapException(String.format(exp, topic,
+                        ", '#' can only be used in the path tail"));
+            }
+            Splitter.on(SLASH).splitToList(topic)
+                    .forEach(item -> {
+                        /*
+                         *  the following path are all forbidden in mqtt
+                         *  /++/test
+                         *  /+test/test
+                         *  /test+/test
+                         */
+                        var indexOfPlus = item.indexOf(PLUS);
+                        if (indexOfPlus >= 0 && item.length() > 1) {
+                            throw new ConfigMapException(String.format(exp, topic,
+                                    ", '+' can only be used itself in path"));
+                        }
+                    });
+        });
     }
 }

@@ -18,11 +18,9 @@ public interface AuthConstants {
     String PLUS = "+";
     String POUND_KEY = "#";
 
-
     String PUB_ACTION = "pub";
     String SUB_ACTION = "sub";
     List<String> ACTION_LIST = List.of(PUB_ACTION, SUB_ACTION);
-
 
     String USERID_PLACEHOLDER = "userId";
     String PVIN_PLACEHOLDER = "pvin";
