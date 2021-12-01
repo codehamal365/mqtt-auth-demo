@@ -1,10 +1,59 @@
 server:
   port: 18088
-
 config-map:
   scopes:
     - mqtt
   topics:
+    # user -> vehicles relations: owner or shared with permissions
+    # restrictable to userid placeholders
+    # restrictable to vin placeholders
+    - topic: "/users/{userId}/vehicles/{pvin}/#"
+      client:
+        - user
+        - device
+      actions:
+        - pub
+        - sub
+      permissions:
+        - vehicle:view
+    # enroller -> customers relations
+    - topic: "/users/{userId}/customers/#"
+      client:
+        - user
+      actions:
+        - pub
+    # enrollment -> grant permission
+    - topic: "/users/{userId}/grantPermission/#"
+      client:
+        - user
+      actions:
+        - pub
+    # restrictable to deviceid placeholders
+    # support + mqtt placeholder
+    - topic: "/devices/{pdeviceId}/getDeviceVehicle/#"
+      client:
+        - device
+      actions:
+        - pub
+        - sub
+    - topic: "/devices/{pdeviceId}/postNetworkStatus/#"
+      client:
+        - device
+      actions:
+        - pub
+    - topic: "/devices/{pdeviceId}/postDeviceLog/#"
+      client:
+        - device
+      actions:
+        - sub
+    - topic: "/vehicles/{pvin}/devices/{pdeviceId}/info"
+      client:
+        - device
+      actions:
+        - pub
+        - sub
+    # restrictable to service name placeholders
+    # support mqtt # placeholder
     - topic: "/services/{serviceName}/devices/getDeviceLogs/#"
       client:
         - service
@@ -21,3 +70,41 @@ config-map:
         - service
       actions:
         - pub
+    #configuration for vehicle topics and user pubsub should be able to validate vehicle permissions from vehicle management,
+    #multiple permission checks need to be supported
+    - topic: "/vehicle-user/{userId}/{pvin}/addUserVehicle/#"
+      client:
+        - user
+      actions:
+        - pub
+      permissions:
+        - user:add
+    - topic: "/vehicle-user/{userId}/{pvin}/removeUserVehicle/#"
+      client:
+        - user
+      actions:
+        - sub
+      permissions:
+        - user:remove
+    - topic: "/vehicle-user/{userId}/{pvin}/updateUserVehicle/#"
+      client:
+        - user
+      actions:
+        - pub
+        - sub
+      permissions:
+        - user:update
+    - topic: "/users/{userId}/enrollers/#"
+      client:
+       - user
+      actions:
+       - sub
+      permissions:
+       - enrollers:view
+    - topic: "/services/{serviceName}/devices/+/getDeviceLogs/"
+      client:
+        - service
+      actions:
+        - pub
+        - sub
+

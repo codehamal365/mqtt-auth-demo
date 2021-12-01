@@ -22,7 +22,6 @@ public class AuthOnPublishDTO extends BaseDTO {
     @NotBlank(message = "topic can not be blank")
     private String topic;
 
-    @NotBlank(message = "payload can not be blank")
     private String payload;
 
     private boolean retain;

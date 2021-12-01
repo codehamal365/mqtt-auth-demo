@@ -9,6 +9,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import javax.validation.ConstraintValidatorContext;
 import javax.validation.Payload;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -47,9 +49,11 @@ public class ConfigMap implements InitializingBean {
     public static class TopicProperties {
         @NotBlank(message = "topic must not be blank")
         private String topic;
+        @NotEmpty(message = "client should be declared")
         private List<@ValueCheck(type = "client", message = "client value is not valid") String> client;
+        @NotEmpty(message = "actions should be declared")
         private List<@ValueCheck(type = "actions", message = "action value is not valid") String> actions;
-        private List<String> permissions;
+        private List<String> permissions = new ArrayList<>();
     }
 
     @Target(ElementType.TYPE_USE)
@@ -119,6 +123,7 @@ public class ConfigMap implements InitializingBean {
                 throw new ConfigMapException(String.format(exp, topic,
                         ", '#' can only be used in the path tail"));
             }
+            // check +
             Splitter.on(SLASH).splitToList(topic)
                     .forEach(item -> {
                         /*

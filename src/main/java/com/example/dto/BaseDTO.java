@@ -16,7 +16,6 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class BaseDTO {
     @JsonProperty("client_id")
-    @NotBlank(message = "client_id can not be blank")
     private String clientId;
 
     @NotBlank(message = "username can not be blank")

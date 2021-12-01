@@ -48,11 +48,11 @@ public class WebhookServiceImpl implements WebhookService {
         // sub topic can contains # or +
         var clientType = UserNameContext.getHolder().getClientType();
         return topics.stream()
-                .peek(topic -> {
-                    if (!clientType.authorize(topic.getTopic(), configMap.getTopics())) {
-                        log.error("{} can not be validated by configuration topics map", topic.getTopic());
-                    }
-                })
+//                .peek(topic -> {
+//                    if (!clientType.authorize(topic.getTopic(), configMap.getTopics())) {
+//                        log.error("{} can not be validated by configuration topics map", topic.getTopic());
+//                    }
+//                })
                 .allMatch(topic -> clientType.authorize(topic.getTopic(), configMap.getTopics()));
     }
 }
