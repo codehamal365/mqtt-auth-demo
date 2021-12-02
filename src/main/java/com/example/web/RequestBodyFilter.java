@@ -18,7 +18,6 @@ public class RequestBodyFilter extends OncePerRequestFilter {
                                     HttpServletResponse httpServletResponse,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        System.out.println("============fileter =========");
         HttpServletRequest use = httpServletRequest;
         if (!(httpServletRequest instanceof BodyCachingRequestWrapper)) {
             use = new BodyCachingRequestWrapper(httpServletRequest);
