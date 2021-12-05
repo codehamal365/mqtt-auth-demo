@@ -1,7 +1,7 @@
 package com.example.config;
 
+import com.example.client.IClient;
 import com.example.constant.AuthConstants;
-import com.example.enums.ClientType;
 import com.example.exception.ConfigMapException;
 import com.google.common.base.Splitter;
 import java.lang.annotation.Documented;
@@ -21,6 +21,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -40,10 +41,18 @@ import static com.example.constant.AuthConstants.SLASH;
 @ConfigurationProperties(prefix = "config-map")
 @Component
 @Data
+@Slf4j
 public class ConfigMap implements InitializingBean {
 
-    private List<String> scopes;
-    private List<@Valid TopicProperties> topics;
+    private List<String> scopes = new ArrayList<>();
+    private List<@Valid TopicProperties> topics = new ArrayList<>();
+
+    private static final List<String> CLIENT_TYPE_LIST = new ArrayList<>();
+
+    public ConfigMap(List<IClient> clients) {
+        clients.stream().map(IClient::type).forEach(CLIENT_TYPE_LIST::add);
+        log.info("all client types are {}", CLIENT_TYPE_LIST);
+    }
 
     @Data
     public static class TopicProperties {
@@ -90,7 +99,7 @@ public class ConfigMap implements InitializingBean {
                     case "actions":
                         return AuthConstants.ACTION_LIST.contains(value);
                     case "client":
-                        return ClientType.getClientTypeList().contains(value);
+                        return CLIENT_TYPE_LIST.contains(value);
                     default:
                         return true;
                 }

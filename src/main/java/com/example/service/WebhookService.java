@@ -14,7 +14,7 @@ public interface WebhookService {
 
     boolean authenticateRegister(String username, String password);
 
-    boolean authorizePublish(String topic);
+    boolean authorizePublish(String username, String topic);
 
-    boolean authorizeSubscribe(List<TopicDTO> topics);
+    boolean authorizeSubscribe(String username, List<TopicDTO> topics);
 }

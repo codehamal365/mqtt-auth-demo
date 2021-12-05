@@ -34,13 +34,13 @@ public class WebhookAuthController {
 
     @PostMapping("subscribe")
     public ResponseDTO authOnSubscribe(@RequestBody @Validated AuthOnSubscribeDTO dto) {
-        return webhookService.authorizeSubscribe(dto.getTopics()) ?
+        return webhookService.authorizeSubscribe(dto.getUsername(), dto.getTopics()) ?
                 ResponseDTO.ok() : ResponseDTO.errorDefault();
     }
 
     @PostMapping("publish")
     public ResponseDTO authOnPublish(@RequestBody @Validated AuthOnPublishDTO dto) {
-        return webhookService.authorizePublish(dto.getTopic()) ?
+        return webhookService.authorizePublish(dto.getUsername(), dto.getTopic()) ?
                 ResponseDTO.ok() : ResponseDTO.errorDefault();
     }
 
