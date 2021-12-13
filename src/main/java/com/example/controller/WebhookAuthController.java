@@ -5,8 +5,16 @@ import com.example.dto.AuthOnRegisterDTO;
 import com.example.dto.AuthOnSubscribeDTO;
 import com.example.dto.ResponseDTO;
 import com.example.service.WebhookService;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +30,10 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/webhooks/auth")
 @ResponseStatus(HttpStatus.OK)
-public class WebhookAuthController {
+public class WebhookAuthController implements ApplicationContextAware {
 
     private final WebhookService webhookService;
+    private ApplicationContext applicationContext;
 
     @PostMapping("register")
     public ResponseDTO authOnRegister(@RequestBody @Validated AuthOnRegisterDTO dto) {
@@ -44,4 +53,29 @@ public class WebhookAuthController {
                 ResponseDTO.ok() : ResponseDTO.errorDefault();
     }
 
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+
+    // 动态注入bean
+    @GetMapping("register")
+    public Object registerBean() {
+        AutowireCapableBeanFactory autowireCapableBeanFactory = applicationContext.getAutowireCapableBeanFactory();
+        if (autowireCapableBeanFactory instanceof DefaultListableBeanFactory) {
+            DefaultListableBeanFactory listableBeanFactory = (DefaultListableBeanFactory) autowireCapableBeanFactory;
+            BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(CustomerBean.class);
+            builder.addConstructorArgValue("hello world");
+            listableBeanFactory.registerBeanDefinition("customerBean", builder.getRawBeanDefinition());
+        }
+        return applicationContext.getBean("customerBean");
+
+    }
+
+
+    @Data
+    @AllArgsConstructor
+    static class CustomerBean {
+        private String name;
+    }
 }
