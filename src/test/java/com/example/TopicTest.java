@@ -85,11 +85,14 @@ public class TopicTest {
          * /+testtopic/ 错误
          * test+topic/ 错误
          */
-
-        AntPathMatcher pathMatcher = new AntPathMatcher();
-        System.out.println(pathMatcher.isPattern("aaf"));
-        System.out.println(pathMatcher.isPattern("/aaf/"));
-        System.out.println(pathMatcher.isPattern("/aaf/{}"));
-        System.out.println(pathMatcher.isPattern("/aaf/{a}"));
+//
+//        AntPathMatcher pathMatcher = new AntPathMatcher();
+//        System.out.println(pathMatcher.isPattern("aaf"));
+//        System.out.println(pathMatcher.isPattern("/aaf/"));
+//        System.out.println(pathMatcher.isPattern("/aaf/{}"));
+//        System.out.println(pathMatcher.isPattern("/aaf/{a}"));
+//
+        String reg = "+/services/+/test/{serviceName}/+/vehicles/#";
+        System.out.println(reg.replace("+", "*").replace("#", "**"));
     }
 }

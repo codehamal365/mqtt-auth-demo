@@ -1,0 +1,54 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:解析bean的定义信息;
+:生成BeanDefinition;
+:BeanFactoryPostProcessor(修改bean定义信息,添加依赖dependency等);
+:实例化前(InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation);
+    note left
+        这里可以返回代理bean，如果返回值非空，后面的bean创建不会继续执行。
+        如果这里返回值不是null，就会立刻执行BeanPostProcessor#postProcessAfterInitialization
+    end note
+:实例化后(InstantiationAwareBeanPostProcessor#postProcessAfterInstantiation);
+     note left
+        在bean通过构造方法或是工厂方法创建以后，在属性填充之前，这个构造方法是其他自定义属性在spring自动注入
+        之前的方法
+     end note
+:这里走分支，需要if else;
+:先看工厂bean缓冲是否以创建(factoryBeanInstanceCache);
+    note left
+        如果没创建继续createBeanInstance；
+        检查class是否是null，是否是public
+        如果是获取getInstanceSupplier，如果能获取到就返回；
+        否则通过工厂方法或者构造方法去生成实例；
+        如果这里构造方法有autowired实例 获取andidate constructors 然后实例化对象
+    end note
+
+:属性填充部分；
+   note left
+        1.这里优先执行InstantiationAwareBeanPostProcessor#postProcessAfterInstantiation；
+        如果返回false，所有后面的其他初始化方法不会再执行。
+        2.都返回true,继续autowired注入
+        获取注入模式resolvedAutowireMode，判断是按类型和名字注入
+        3.判断是否有InstantiationAwareBeanPostProcessor类型
+          这里是在bean其他属性填充之前，对属性做变更
+          循环调用postProcessProperties
+          如果为空 这继续执行postProcessPropertyValues
+          如果不为空则继续下一个InstantiationAwareBeanPostProcessor
+        4.处理好PropertyValues后对bean属性进行填充
+          这里会获取字段类型转换器，并进行值转换后填充
+        5.属性填充后initializeBean
+            执行aware接口初始化
+            依次是BeanNameAware、BeanClassLoaderAware、BeanFactoryAware
+        6.执行BeanPostProcessor#postProcessBeforeInitialization
+        7.执行初始化方法
+            先执行InitializingBean的afterPropertiesSet方法
+            在执行InitMethod方法
+        8.最后执行BeanPostProcessor#postProcessAfterInitialization方法
+        9.registerDisposableBeanIfNecessary#DestructionAwareBeanPostProcessor
+   end note
+:初始化前();
+:初始化后();
+
+@enduml
