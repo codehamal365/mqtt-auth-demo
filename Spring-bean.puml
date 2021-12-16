@@ -22,7 +22,7 @@ start
         检查class是否是null，是否是public
         如果是获取getInstanceSupplier，如果能获取到就返回；
         否则通过工厂方法或者构造方法去生成实例；
-        如果这里构造方法有autowired实例 获取andidate constructors 然后实例化对象
+        如果这里构造方法有autowired实例 获取candidate constructors 然后实例化对象
     end note
 
 :属性填充部分；

@@ -4,7 +4,7 @@ FROM openjdk:11-jdk-oracle
 
 VOLUME /opt/tmp
 
-ADD mqtt-auth-demo.jar app.jar
+ADD mqtt-aut-hdemo.jar app.jar
 
 # -Djava.security.egd=file:/dev/./urandom 可解决tomcat可能启动慢的问题
 # 具体可查看：https://www.cnblogs.com/mightyvincent/p/7685310.html

@@ -4,31 +4,29 @@ import com.example.constant.AuthConstants;
 import com.example.enums.ClientType;
 import com.example.exception.ConfigMapException;
 import com.google.common.base.Splitter;
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.validation.Constraint;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
-import javax.validation.Payload;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.support.EncodedResource;
+import org.springframework.core.io.support.PropertySourceFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import static com.example.constant.AuthConstants.PLUS;
-import static com.example.constant.AuthConstants.POUND_KEY;
-import static com.example.constant.AuthConstants.SLASH;
+import javax.validation.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import java.io.IOException;
+import java.lang.annotation.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.example.constant.AuthConstants.*;
 
 /**
  * configuration map for topics and scopes
@@ -40,6 +38,8 @@ import static com.example.constant.AuthConstants.SLASH;
 @ConfigurationProperties(prefix = "config-map")
 @Component
 @Data
+@org.springframework.context.annotation.PropertySource(value = "${config-map-file-path}",
+        factory = ConfigMap.YamlPropertySourceFactory.class)
 public class ConfigMap implements InitializingBean {
 
     private List<String> scopes;
@@ -140,4 +140,20 @@ public class ConfigMap implements InitializingBean {
                     });
         });
     }
+
+    static class YamlPropertySourceFactory implements PropertySourceFactory {
+
+        @Override
+        public PropertySource<?> createPropertySource( String name, EncodedResource encodedResource)
+                throws IOException {
+            YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();
+            factory.setResources(encodedResource.getResource());
+
+            Properties properties = factory.getObject();
+
+            return new PropertiesPropertySource(encodedResource.getResource().getFilename(), properties);
+        }
+    }
+
+
 }
