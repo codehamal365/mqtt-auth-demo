@@ -1,4 +1,4 @@
-package com.example.web;
+package com.example.exception;
 
 import com.example.controller.WebhookAuthController;
 import com.example.dto.ResponseDTO;
@@ -17,13 +17,14 @@ import static java.util.stream.Collectors.joining;
 @RestControllerAdvice(assignableTypes = WebhookAuthController.class)
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class GlobalExceptionHandler {
+public class WebHookExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
     @ResponseStatus(HttpStatus.OK)
     public ResponseDTO exceptionHandler(Exception e) {
         log.error("exception {} occurs,error message {}", e, e.getMessage());
-        return ResponseDTO.error(e.getMessage());
+//        return ResponseDTO.error(e.getMessage());
+        return ResponseDTO.errorDefault();
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
