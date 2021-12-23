@@ -4,32 +4,26 @@ import com.example.client.IClient;
 import com.example.constant.AuthConstants;
 import com.example.exception.ConfigMapException;
 import com.google.common.base.Splitter;
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.validation.Constraint;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
-import javax.validation.Payload;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-import org.springframework.validation.annotation.Validated;
 
-import static com.example.constant.AuthConstants.PLUS;
-import static com.example.constant.AuthConstants.POUND_KEY;
-import static com.example.constant.AuthConstants.SLASH;
+import static com.example.constant.AuthConstants.*;
 
 /**
  * configuration map for topics and scopes
@@ -42,6 +36,9 @@ import static com.example.constant.AuthConstants.SLASH;
 @Component
 @Data
 @Slf4j
+@NoArgsConstructor
+@SuppressWarnings("all")
+@PropertySource(value = "${config-map-class-path}", factory = YamlPropertySourceFactory.class)
 public class ConfigMap implements InitializingBean {
 
     private List<String> scopes = new ArrayList<>();
@@ -49,6 +46,7 @@ public class ConfigMap implements InitializingBean {
 
     private static final List<String> CLIENT_TYPE_LIST = new ArrayList<>();
 
+    @Autowired
     public ConfigMap(List<IClient> clients) {
         clients.stream().map(IClient::type).forEach(CLIENT_TYPE_LIST::add);
         log.info("all client types are {}", CLIENT_TYPE_LIST);

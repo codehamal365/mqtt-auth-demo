@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.config.ConfigMap;
 import com.example.dto.AuthOnPublishDTO;
 import com.example.dto.AuthOnRegisterDTO;
 import com.example.dto.AuthOnSubscribeDTO;
@@ -18,6 +19,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * webhooks controller
@@ -70,6 +73,13 @@ public class WebhookAuthController implements ApplicationContextAware {
         }
         return applicationContext.getBean("customerBean");
 
+    }
+
+
+    @GetMapping("test")
+    public Map<String,Object> test(){
+        ConfigMap bean = applicationContext.getBean(ConfigMap.class);
+        return Map.of("topics",bean.getTopics(),"scopes",bean.getScopes());
     }
 
 

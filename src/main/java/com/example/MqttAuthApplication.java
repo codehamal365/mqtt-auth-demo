@@ -2,6 +2,7 @@ package com.example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
 /**
  * @author xie.wei
@@ -10,6 +11,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class MqttAuthApplication {
     public static void main(String[] args) {
-        SpringApplication.run(MqttAuthApplication.class, args);
+        ConfigurableApplicationContext run = SpringApplication.run(MqttAuthApplication.class, args);
     }
 }

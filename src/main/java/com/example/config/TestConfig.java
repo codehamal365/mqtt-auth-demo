@@ -1,12 +1,27 @@
 package com.example.config;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.beans.factory.InitializingBean;
+
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.monitor.FileAlterationListener;
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
+import org.apache.commons.io.monitor.FileAlterationMonitor;
+import org.apache.commons.io.monitor.FileAlterationObserver;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.EncodedResource;
+
+import java.io.File;
+import java.util.Properties;
 
 /**
  * test bean init method
@@ -15,38 +30,69 @@ import org.springframework.context.annotation.Configuration;
  * @date created at 2021-12-14 10:26
  */
 @Configuration
-public class TestConfig {
+public class TestConfig implements CommandLineRunner {
 
+    @Value("${config-map-class-path}")
+    String path;
 
-    @Bean(initMethod = "init")
-    public InitBean initBean() {
-        return new InitBean();
-    }
+    @Autowired
+    ApplicationContext context;
 
+    @Autowired
+    ConfigurableEnvironment environment;
 
-    static class InitBean implements InitializingBean, BeanNameAware, ApplicationContextAware {
+    @Override
+    public void run(String... args) throws Exception {
 
-        public InitBean() {
-            System.out.println("InitBean construct");
-        }
+        final DefaultResourceLoader loader = new DefaultResourceLoader();
+        final Resource resource = loader.getResource(path);
+        final String path1 = resource.getURI().getPath();
+        final int indexOf = path1.lastIndexOf("/");
+        String dir = path1.substring(0, indexOf);
+        String filename = path1.substring(indexOf + 1);
 
-        private void init() {
-            System.out.println("init bean init-method");
-        }
+        FileAlterationObserver observer = new FileAlterationObserver(dir, new NameFileFilter(filename));
+        FileAlterationMonitor monitor = new FileAlterationMonitor(20000);
+        FileAlterationListener listener = new FileAlterationListenerAdaptor() {
 
-        @Override
-        public void afterPropertiesSet() throws Exception {
-            System.out.println("init bean afterPropertiesSet");
-        }
+            @Override
+            public void onStop(FileAlterationObserver observer) {
+                super.onStop(observer);
 
-        @Override
-        public void setBeanName(String s) {
-            System.out.println("init bean setBeanName: " + s);
-        }
+                System.out.println("=========================stop");
+            }
 
-        @Override
-        public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-            System.out.println("init bean setApplicationContext");
-        }
+            @Override
+            public void onFileChange(File file) {
+
+                FileSystemResource fileSystemResource = new FileSystemResource(file);
+                EncodedResource encodedResource = new EncodedResource(fileSystemResource);
+                YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();
+                factory.setResources(encodedResource.getResource());
+                Properties properties = factory.getObject();
+                environment.getPropertySources()
+                        .replace(filename, new PropertiesPropertySource(filename, properties));
+                final Properties properties1 = new Properties();
+                properties1.setProperty("my-test", "hello-world");
+                environment.getPropertySources().addLast(new PropertiesPropertySource("my-test", properties1));
+                ConfigurationPropertiesBindingPostProcessor bean = context
+                        .getBean(ConfigurationPropertiesBindingPostProcessor.class);
+
+                ConfigMap bean1 = context.getBean(ConfigMap.class);
+                bean1.setTopics(null);
+                bean1.setScopes(null);
+                bean.postProcessBeforeInitialization(bean1, "configMap");
+                try {
+                    bean1.afterPropertiesSet();
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                }
+
+            }
+        };
+        observer.addListener(listener);
+        monitor.addObserver(observer);
+        monitor.start();
+
     }
 }

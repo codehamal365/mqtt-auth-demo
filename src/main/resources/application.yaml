@@ -6,7 +6,110 @@ management:
     web:
       exposure:
         include: '*'
+      discovery:
+        enabled: true
+
+#config-map:
+#  scopes:
+#    - mqtt
+#  topics:
+#    - topic: "/users/{userId}/vehicles/{pvin}/#"
+#      client:
+#        - user
+#        - device
+#      actions:
+#        - pub
+#        - sub
+#      permissions:
+#        - vehicle:view
+#    - topic: "/users/{userId}/customers/#"
+#      client:
+#        - user
+#      actions:
+#        - pub
+#    - topic: "/users/{userId}/grantPermission/#"
+#      client:
+#        - user
+#      actions:
+#        - pub
+#    - topic: "/devices/{pdeviceId}/getDeviceVehicle/#"
+#      client:
+#        - device
+#      actions:
+#        - pub
+#        - sub
+#    - topic: "/devices/{pdeviceId}/postNetworkStatus/#"
+#      client:
+#        - device
+#      actions:
+#        - pub
+#    - topic: "/devices/{pdeviceId}/postDeviceLog/#"
+#      client:
+#        - device
+#      actions:
+#        - sub
+#    - topic: "/vehicles/{pvin}/devices/{pdeviceId}/info"
+#      client:
+#        - device
+#      actions:
+#        - pub
+#        - sub
+#    - topic: "/services/{serviceName}/devices/getDeviceLogs/#"
+#      client:
+#        - service
+#      actions:
+#        - sub
+#    - topic: "/users/+/{serviceName}/"
+#      client:
+#        - service
+#      actions:
+#        - pub
+#        - sub
+#    - topic: "/services/{serviceName}/vehicles/#"
+#      client:
+#        - service
+#      actions:
+#        - pub
+#    - topic: "/vehicle-user/{userId}/{pvin}/addUserVehicle/#"
+#      client:
+#        - user
+#      actions:
+#        - pub
+#      permissions:
+#        - user:add
+#    - topic: "/vehicle-user/{userId}/{pvin}/removeUserVehicle/#"
+#      client:
+#        - user
+#      actions:
+#        - sub
+#      permissions:
+#        - user:remove
+#    - topic: "/vehicle-user/{userId}/{pvin}/updateUserVehicle/#"
+#      client:
+#        - user
+#      actions:
+#        - pub
+#        - sub
+#      permissions:
+#        - user:update
+#    - topic: "/users/{userId}/enrollers/#"
+#      client:
+#        - user
+#      actions:
+#        - sub
+#      permissions:
+#        - enrollers:view
+#    - topic: "/services/{serviceName}/devices/+/getDeviceLogs/"
+#      client:
+#        - service
+#      actions:
+#        - pub
+#        - sub
+#    - topic: test
+#      client:
+#        - service
+#      actions:
+#        - pub
+
 
 config-map-class-path: classpath:config-map.yaml
-file-path: D:\git\mqtt-auth-demo\src\main\resources\config-map.yaml
-config-map-file-path: file:${file-path}
